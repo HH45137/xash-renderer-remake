@@ -12,6 +12,8 @@ qboolean R_Init(void) {
             1280, 720,
             SDL_WINDOW_SHOWN | SDL_WINDOW_VULKAN);
 
+    SDL_Log("%s", SDL_GetError());
+
     return false;
 }
 
@@ -19,6 +21,7 @@ void R_Shutdown(void) {
     SDL_DestroyWindow(window);
     SDL_Vulkan_UnloadLibrary();
     SDL_Quit();
+    SDL_Log("%s", SDL_GetError());
 }
 
 const char *R_GetConfigName(void) {
