@@ -2,6 +2,7 @@
 #include <iostream>
 #include <windows.h>
 
+#include <SDL2/SDL.h>
 
 void init() {
     R_Init();

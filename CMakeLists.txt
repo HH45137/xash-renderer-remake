@@ -27,6 +27,8 @@ FIND_LIB_FUNC()
 add_library(${PROJECT_NAME} SHARED
         src/ref_vk.cpp
         include/common/typedef.h
+        include/common/VulkanDebug.h
+        src/common/VulkanDebug.cpp
 )
 ADD_LIB_FUNC(${PROJECT_NAME})
 

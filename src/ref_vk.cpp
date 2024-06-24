@@ -1,24 +1,157 @@
 #include <ref_vk.h>
 #include <iostream>
 
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_vulkan.h>
+#include <vulkan/vulkan.hpp>
+#include <common/VulkanDebug.h>
+
+#if defined(_WIN32)
+
+#include <Windows.h>
+#include <vulkan/vulkan_win32.h>
+
+#endif
+
+#if defined(_DEBUG)
+bool enabledValidationLayer = true;
+#else
+bool enabledValidationLayer = false;
+#endif
+
+
+struct env_s {
+public:
+    // Window
+    SDL_Window *window;
+    const char *winTitle = "Test Window";
+    int winWidth = 800, winHeight = 600;
+
+    // Vulkan
+    VkInstance instance;
+    std::vector<std::string> supportedInstanceExtensions;
+    std::vector<std::string> enableInstanceExtensions;
+};
+env_s r_env{};
+
+
+VkResult createInstance() {
+    std::vector<const char *> instanceExtensions = {VK_KHR_SURFACE_EXTENSION_NAME};
+
+    // Depending on os the extensions
+#if defined(_WIN32)
+    instanceExtensions.push_back(VK_KHR_WIN32_SURFACE_EXTENSION_NAME);
+#endif
+
+    // Get extensions supported by the instance and store for later use
+    uint32_t extCount = 0;
+    vkEnumerateInstanceExtensionProperties(nullptr, &extCount, nullptr);
+    if (extCount > 0) {
+        std::vector<VkExtensionProperties> extensions(extCount);
+        if (vkEnumerateInstanceExtensionProperties(nullptr, &extCount, &extensions.front()) == VK_SUCCESS) {
+            for (VkExtensionProperties &extension: extensions) {
+                r_env.supportedInstanceExtensions.push_back(extension.extensionName);
+            }
+        }
+    }
+
+    // Set requested instance extensions
+    if (r_env.enableInstanceExtensions.size() > 0) {
+        for (auto enableExtension: r_env.enableInstanceExtensions) {
+            if (std::find(r_env.supportedInstanceExtensions.begin(), r_env.supportedInstanceExtensions.end(),
+                          enableExtension) == r_env.supportedInstanceExtensions.end()) {
+                std::cout << "Enabled instance extension: " << enableExtension << "\n";
+            }
+            instanceExtensions.push_back(enableExtension.c_str());
+        }
+    }
+
+    // ========== Create vulkan instance ==========
+    VkApplicationInfo appInfo{};
+    appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
+    appInfo.pApplicationName = "Xash vulkan renderer";
+    appInfo.pEngineName = "Vulkan renderer";
+    appInfo.apiVersion = VK_API_VERSION_1_3;
+
+    VkInstanceCreateInfo instanceCreateInfo{};
+    instanceCreateInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+    instanceCreateInfo.pApplicationInfo = &appInfo;
+
+    VkDebugUtilsMessengerCreateInfoEXT debugUtilsMessengerCI{};
+    if (enabledValidationLayer) {
+        vks::debug::setupDebugingMessengerCreateInfo(debugUtilsMessengerCI);
+        debugUtilsMessengerCI.pNext = instanceCreateInfo.pNext;
+        instanceCreateInfo.pNext = &debugUtilsMessengerCI;
+    }
+    if (enabledValidationLayer ||
+        std::find(r_env.supportedInstanceExtensions.begin(), r_env.supportedInstanceExtensions.end(),
+                  VK_EXT_DEBUG_UTILS_EXTENSION_NAME) != r_env.supportedInstanceExtensions.end()) {
+        instanceExtensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+    }
+
+    if (instanceExtensions.size() > 0) {
+        instanceCreateInfo.enabledExtensionCount = (uint32_t) instanceExtensions.size();
+        instanceCreateInfo.ppEnabledExtensionNames = instanceExtensions.data();
+    }
+
+    // The VK_LAYER_KHRONOS_validation contains all current validation functionality.
+    // Note that on Android this layer requires at least NDK r20
+    const char *validationLayerName = "VK_LAYER_KHRONOS_validation";
+    if (enabledValidationLayer) {
+        // Check if this layer is available at instance level
+        uint32_t instanceLayerCount;
+        vkEnumerateInstanceLayerProperties(&instanceLayerCount, nullptr);
+        std::vector<VkLayerProperties> instanceLayerProperties(instanceLayerCount);
+        vkEnumerateInstanceLayerProperties(&instanceLayerCount, instanceLayerProperties.data());
+        bool validationLayerPresent = false;
+        for (VkLayerProperties &layer: instanceLayerProperties) {
+            if (strcmp(layer.layerName, validationLayerName) == 0) {
+                validationLayerPresent = true;
+                break;
+            }
+        }
+        if (validationLayerPresent) {
+            instanceCreateInfo.ppEnabledLayerNames = &validationLayerName;
+            instanceCreateInfo.enabledLayerCount = 1;
+        } else {
+            std::cerr << "Validation layer VK_LAYER_KHRONOS_validation not present, validation is disabled";
+        }
+    }
+
+    VkResult result = vkCreateInstance(&instanceCreateInfo, nullptr, &r_env.instance);
+
+    // If the debug utils extension is present we set up debug functions, so samples can label objects for debugging
+    if (std::find(r_env.supportedInstanceExtensions.begin(), r_env.supportedInstanceExtensions.end(),
+                  VK_EXT_DEBUG_UTILS_EXTENSION_NAME) != r_env.supportedInstanceExtensions.end()) {
+        vks::debugutils::setup(r_env.instance);
+    }
+
+    return result;
+}
 
 qboolean R_Init(void) {
+    // Init SDL window
     SDL_Init(SDL_INIT_VIDEO);
     SDL_Vulkan_LoadLibrary(nullptr);
-    window = SDL_CreateWindow(
-            "Test window",
+    r_env.window = SDL_CreateWindow(
+            r_env.winTitle,
             SDL_WINDOWPOS_UNDEFINED,
             SDL_WINDOWPOS_UNDEFINED,
-            1280, 720,
+            r_env.winWidth,
+            r_env.winHeight,
             SDL_WINDOW_SHOWN | SDL_WINDOW_VULKAN);
 
     SDL_Log("%s", SDL_GetError());
+
+    // Init Vulkan
+    VkResult result = createInstance();
+    SDL_Log("Create vulkan instance = %s", result == 0 ? "True" : "False");
 
     return false;
 }
 
 void R_Shutdown(void) {
-    SDL_DestroyWindow(window);
+    SDL_DestroyWindow(r_env.window);
     SDL_Vulkan_UnloadLibrary();
     SDL_Quit();
     SDL_Log("%s", SDL_GetError());
