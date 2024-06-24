@@ -5,6 +5,7 @@
 #include <SDL2/SDL_vulkan.h>
 #include <vulkan/vulkan.hpp>
 #include <common/VulkanDebug.h>
+#include <common/vktools.h>
 
 #if defined(_WIN32)
 
@@ -13,27 +14,33 @@
 
 #endif
 
+namespace ref_vk {
+
 #if defined(_DEBUG)
-bool enabledValidationLayer = true;
+    bool enabledValidationLayer = true;
 #else
-bool enabledValidationLayer = false;
+    bool enabledValidationLayer = false;
 #endif
 
+    struct env_s {
+    public:
+        // Window
+        SDL_Window *window;
+        const char *winTitle = "Test Window";
+        int winWidth = 800, winHeight = 600;
 
-struct env_s {
-public:
-    // Window
-    SDL_Window *window;
-    const char *winTitle = "Test Window";
-    int winWidth = 800, winHeight = 600;
+        // Vulkan
+        VkInstance instance;
+        std::vector<std::string> supportedInstanceExtensions;
+        std::vector<std::string> enableInstanceExtensions;
+        VkPhysicalDevice phyDevice;
+    };
+    env_s r_env{};
 
-    // Vulkan
-    VkInstance instance;
-    std::vector<std::string> supportedInstanceExtensions;
-    std::vector<std::string> enableInstanceExtensions;
-};
-env_s r_env{};
+}
 
+
+using namespace ref_vk;
 
 VkResult createInstance() {
     std::vector<const char *> instanceExtensions = {VK_KHR_SURFACE_EXTENSION_NAME};
@@ -130,7 +137,9 @@ VkResult createInstance() {
 }
 
 qboolean R_Init(void) {
-    // Init SDL window
+    bool isSuccess = true;
+
+    /* ========== Init SDL window ========== */
     SDL_Init(SDL_INIT_VIDEO);
     SDL_Vulkan_LoadLibrary(nullptr);
     r_env.window = SDL_CreateWindow(
@@ -140,14 +149,37 @@ qboolean R_Init(void) {
             r_env.winWidth,
             r_env.winHeight,
             SDL_WINDOW_SHOWN | SDL_WINDOW_VULKAN);
-
     SDL_Log("%s", SDL_GetError());
 
-    // Init Vulkan
-    VkResult result = createInstance();
-    SDL_Log("Create vulkan instance = %s", result == 0 ? "True" : "False");
+    /* ========== Init Vulkan ========== */
 
-    return false;
+    // Create instance
+    isSuccess = VK_CHECK_RESULT(createInstance());
+
+    if (enabledValidationLayer) {
+        vks::debug::setupDebugging(r_env.instance);
+    }
+
+    // Set physics device
+    // Get physics device number
+    uint32_t gpuCount = 0;
+    isSuccess = VK_CHECK_RESULT(vkEnumeratePhysicalDevices(r_env.instance, &gpuCount, nullptr));
+    if (gpuCount <= 0) {
+        LOG(ERR, "Could not find support vulkan GPU");
+        return false;
+    }
+    // Enumerate all physics devices
+    std::vector<VkPhysicalDevice> physicalDevices(gpuCount);
+    isSuccess = VK_CHECK_RESULT(vkEnumeratePhysicalDevices(r_env.instance, &gpuCount, physicalDevices.data()),
+                                "Could not enumerate physical devices"
+    );
+    // GPU selection
+    uint32_t selectionDeviceIndex = 0;
+    r_env.phyDevice = physicalDevices[selectionDeviceIndex];
+
+
+
+    return isSuccess;
 }
 
 void R_Shutdown(void) {
