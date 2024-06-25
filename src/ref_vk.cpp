@@ -44,7 +44,14 @@ namespace ref_vk {
         VkBool32 requiresStencil{};
         VkFormat depthFormat{};
         CSwapChain swapChain{};
-
+        struct {
+            // Swap chain image presentation
+            VkSemaphore presentComplete;
+            // Command buffer submit and execution
+            VkSemaphore renderComplete;
+        } semaphores;
+        VkSubmitInfo submitInfo{};
+        VkPipelineStageFlags submitPipelineStageFlags = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
     };
     env_s r_env{};
 
@@ -204,7 +211,28 @@ qboolean R_Init(void) {
     }
     assert(validFormat);
 
+    // prepare swap chain context
     r_env.swapChain.setContext(r_env.instance, r_env.phyDevice, r_env.logicDevice);
+
+    // Create synchronization objects
+    VkSemaphoreCreateInfo semaphoreCreateInfo{};
+    semaphoreCreateInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+    // Create synchronization semaphore for swap chain image presentation
+    VK_CHECK_RESULT(
+            vkCreateSemaphore(r_env.logicDevice, &semaphoreCreateInfo, nullptr, &r_env.semaphores.presentComplete),
+            "Cannot create synchronization semaphore for swap chain image presentation");
+    // Create synchronization semaphore for command buffer
+    VK_CHECK_RESULT(
+            vkCreateSemaphore(r_env.logicDevice, &semaphoreCreateInfo, nullptr, &r_env.semaphores.renderComplete),
+            "Cannot create synchronization semaphore for command buffer");
+
+    // Setup synchronization objects
+    r_env.submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+    r_env.submitInfo.pWaitDstStageMask = &r_env.submitPipelineStageFlags;
+    r_env.submitInfo.waitSemaphoreCount = 1;
+    r_env.submitInfo.pWaitSemaphores = &r_env.semaphores.presentComplete;
+    r_env.submitInfo.signalSemaphoreCount = 1;
+    r_env.submitInfo.pSignalSemaphores = &r_env.semaphores.renderComplete;
 
     return isSuccess;
 }
