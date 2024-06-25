@@ -5,7 +5,8 @@
 #include <SDL2/SDL_vulkan.h>
 #include <vulkan/vulkan.hpp>
 #include <common/VulkanDebug.h>
-#include <common/vktools.h>
+#include <common/CTools.h>
+#include <common/CDevice.h>
 
 #if defined(_WIN32)
 
@@ -34,6 +35,7 @@ namespace ref_vk {
         std::vector<std::string> supportedInstanceExtensions;
         std::vector<std::string> enableInstanceExtensions;
         VkPhysicalDevice phyDevice;
+        ref_vk::CDevice *device;
     };
     env_s r_env{};
 
@@ -177,7 +179,7 @@ qboolean R_Init(void) {
     uint32_t selectionDeviceIndex = 0;
     r_env.phyDevice = physicalDevices[selectionDeviceIndex];
 
-
+    r_env.device = new ref_vk::CDevice(r_env.phyDevice);
 
     return isSuccess;
 }

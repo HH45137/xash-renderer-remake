@@ -29,7 +29,9 @@ add_library(${PROJECT_NAME} SHARED
         include/common/typedef.h
         include/common/VulkanDebug.h
         src/common/VulkanDebug.cpp
-        include/common/vktools.h
+        include/common/CTools.h
+        include/common/CDevice.h
+        src/common/CDevice.cpp
 )
 ADD_LIB_FUNC(${PROJECT_NAME})
 
