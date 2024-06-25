@@ -33,6 +33,8 @@ add_library(${PROJECT_NAME} SHARED
         include/common/CDevice.h
         src/common/CDevice.cpp
         src/common/CTools.cpp
+        include/common/CSwapChain.h
+        src/common/CSwapChain.cpp
 )
 ADD_LIB_FUNC(${PROJECT_NAME})
 

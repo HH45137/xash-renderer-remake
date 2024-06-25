@@ -7,6 +7,7 @@
 #include <common/VulkanDebug.h>
 #include <common/CTools.h>
 #include <common/CDevice.h>
+#include <common/CSwapChain.h>
 
 #if defined(_WIN32)
 
@@ -42,6 +43,8 @@ namespace ref_vk {
         void *deviceCreateNextChain = nullptr;
         VkBool32 requiresStencil{};
         VkFormat depthFormat{};
+        CSwapChain swapChain{};
+
     };
     env_s r_env{};
 
@@ -201,7 +204,7 @@ qboolean R_Init(void) {
     }
     assert(validFormat);
 
-
+    r_env.swapChain.setContext(r_env.instance, r_env.phyDevice, r_env.logicDevice);
 
     return isSuccess;
 }
