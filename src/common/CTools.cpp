@@ -39,4 +39,43 @@ namespace ref_vk {
         return true;
     }
 
+    VkBool32 getSupportedDepthStencilFormat(VkPhysicalDevice phyDevice, VkFormat *depthStencilFormat) {
+        std::vector<VkFormat> formatList{
+                VK_FORMAT_D32_SFLOAT_S8_UINT,
+                VK_FORMAT_D24_UNORM_S8_UINT,
+                VK_FORMAT_D16_UNORM_S8_UINT,
+        };
+
+        for (auto &format: formatList) {
+            VkFormatProperties formatProps;
+            vkGetPhysicalDeviceFormatProperties(phyDevice, format, &formatProps);
+            if (formatProps.optimalTilingFeatures & VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT) {
+                *depthStencilFormat = format;
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    VkBool32 getSupportedDepthFormat(VkPhysicalDevice phyDevice, VkFormat *depthFormat) {
+        std::vector<VkFormat> formatList{
+                VK_FORMAT_D32_SFLOAT_S8_UINT,
+                VK_FORMAT_D32_SFLOAT,
+                VK_FORMAT_D24_UNORM_S8_UINT,
+                VK_FORMAT_D16_UNORM_S8_UINT,
+                VK_FORMAT_D16_UNORM
+        };
+
+        for (auto &format: formatList) {
+            VkFormatProperties formatProps;
+            vkGetPhysicalDeviceFormatProperties(phyDevice, format, &formatProps);
+            if (formatProps.optimalTilingFeatures & VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT) {
+                *depthFormat = format;
+                return true;
+            }
+        }
+
+        return false;
+    }
 }

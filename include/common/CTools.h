@@ -16,4 +16,7 @@ namespace ref_vk {
     bool VK_CHECK_RESULT(VkResult res);
 
     bool VK_CHECK_RESULT(VkResult res, const char* text);
+
+    VkBool32 getSupportedDepthStencilFormat(VkPhysicalDevice phyDevice, VkFormat* depthStencilFormat);
+    VkBool32 getSupportedDepthFormat(VkPhysicalDevice phyDevice, VkFormat* depthFormat);
 }

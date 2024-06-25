@@ -35,10 +35,13 @@ namespace ref_vk {
         std::vector<std::string> supportedInstanceExtensions{};
         std::vector<std::string> enableInstanceExtensions{};
         VkPhysicalDevice phyDevice{};
+        VkDevice logicDevice{};
         ref_vk::CDevice *device{};
         VkPhysicalDeviceFeatures enableFeatures{};
-        std::vector<const char*> enableDeviceExtensions{};
+        std::vector<const char *> enableDeviceExtensions{};
         void *deviceCreateNextChain = nullptr;
+        VkBool32 requiresStencil{};
+        VkFormat depthFormat{};
     };
     env_s r_env{};
 
@@ -178,14 +181,27 @@ qboolean R_Init(void) {
     isSuccess = VK_CHECK_RESULT(vkEnumeratePhysicalDevices(r_env.instance, &gpuCount, physicalDevices.data()),
                                 "Could not enumerate physical devices"
     );
-    // GPU selection
+
+    // GPU id selection
     uint32_t selectionDeviceIndex = 0;
+    // Set logical device
     r_env.phyDevice = physicalDevices[selectionDeviceIndex];
-
     r_env.device = new ref_vk::CDevice(r_env.phyDevice);
-
     isSuccess = VK_CHECK_RESULT(r_env.device->createLogicalDevice(r_env.enableFeatures, r_env.enableDeviceExtensions,
-                                                                  r_env.deviceCreateNextChain));
+                                                                  r_env.deviceCreateNextChain),
+                                "Could not create vulkan device");
+    r_env.logicDevice = r_env.device->device;
+
+    //Find a suitable depth, stencil format
+    VkBool32 validFormat{};
+    if (r_env.requiresStencil) {
+        validFormat = ref_vk::getSupportedDepthStencilFormat(r_env.phyDevice, &r_env.depthFormat);
+    } else {
+        validFormat = ref_vk::getSupportedDepthFormat(r_env.phyDevice, &r_env.depthFormat);
+    }
+    assert(validFormat);
+
+
 
     return isSuccess;
 }

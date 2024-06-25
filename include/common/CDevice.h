@@ -31,7 +31,7 @@ namespace ref_vk {
                                      void *pNextChain, bool useSwapChain = true,
                                      VkQueueFlags requestedQueueTypes = VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_COMPUTE_BIT);
 
-    private:
+//    private:
         uint32_t getQueueFamilyIndex(VkQueueFlags queueFlags);
 
         bool extensionSupported(std::string extension);
