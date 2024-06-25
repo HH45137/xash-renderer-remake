@@ -31,11 +31,14 @@ namespace ref_vk {
         int winWidth = 800, winHeight = 600;
 
         // Vulkan
-        VkInstance instance;
-        std::vector<std::string> supportedInstanceExtensions;
-        std::vector<std::string> enableInstanceExtensions;
-        VkPhysicalDevice phyDevice;
-        ref_vk::CDevice *device;
+        VkInstance instance{};
+        std::vector<std::string> supportedInstanceExtensions{};
+        std::vector<std::string> enableInstanceExtensions{};
+        VkPhysicalDevice phyDevice{};
+        ref_vk::CDevice *device{};
+        VkPhysicalDeviceFeatures enableFeatures{};
+        std::vector<const char*> enableDeviceExtensions{};
+        void *deviceCreateNextChain = nullptr;
     };
     env_s r_env{};
 
@@ -180,6 +183,9 @@ qboolean R_Init(void) {
     r_env.phyDevice = physicalDevices[selectionDeviceIndex];
 
     r_env.device = new ref_vk::CDevice(r_env.phyDevice);
+
+    isSuccess = VK_CHECK_RESULT(r_env.device->createLogicalDevice(r_env.enableFeatures, r_env.enableDeviceExtensions,
+                                                                  r_env.deviceCreateNextChain));
 
     return isSuccess;
 }

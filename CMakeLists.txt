@@ -32,6 +32,7 @@ add_library(${PROJECT_NAME} SHARED
         include/common/CTools.h
         include/common/CDevice.h
         src/common/CDevice.cpp
+        src/common/CTools.cpp
 )
 ADD_LIB_FUNC(${PROJECT_NAME})
 
