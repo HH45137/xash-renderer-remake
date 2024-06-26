@@ -1,13 +1,13 @@
 #pragma once
 
-#include <common/typedef.h>
+#include <common/Typedef.h>
 
 #define EXPORT_DLL __declspec(dllexport)
 
 
 extern "C" {
 
-EXPORT_DLL qboolean R_Init(void);
+EXPORT_DLL REF_VK::qboolean R_Init(void);
 
 EXPORT_DLL void R_Shutdown(void);
 

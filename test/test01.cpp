@@ -20,7 +20,7 @@ int main(int argc, char *argv[]) {
 
     init();
 
-    qboolean running = true;
+    REF_VK::qboolean running = true;
     while (running) {
         update();
 

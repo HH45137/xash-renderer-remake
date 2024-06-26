@@ -153,6 +153,9 @@ namespace REF_VK {
             // Create command buffers
             createCommandBuffers();
 
+            // Create vertex buffer
+            createVertexBuffer();
+
             return isSuccess;
         }
 
@@ -266,13 +269,25 @@ namespace REF_VK {
             bool result = VK_CHECK_RESULT(vkAllocateCommandBuffers(logicDevice, &CI, drawCmdBuffers.data()));
             return result;
         }
+
+        void createVertexBuffer() {
+
+            std::vector<Vertex> vertexBuffer{
+                    {{1.0f,  1.0f,  0.0f}, {1.0f, 0.0f, 0.0f}},
+                    {{-1.0f, 1.0f,  0.0f}, {0.0f, 1.0f, 0.0f}},
+                    {{0.0f,  -1.0f, 0.0f}, {0.0f, 0.0f, 1.0f}}
+            };
+
+
+        }
+
     };
 
     CRef_Vk ref_vk_obj{};
 }
 
-qboolean R_Init(void) {
-    qboolean result = REF_VK::ref_vk_obj.init();
+REF_VK::qboolean R_Init(void) {
+    REF_VK::qboolean result = REF_VK::ref_vk_obj.init();
     return result;
 }
 
