@@ -5,6 +5,8 @@
 
 namespace REF_VK {
 
+    const long DEFAULT_FENCE_TIMEOUT = 999999999;
+
     enum LOG_ERRORS {
         NORMAL,
         ERR,
