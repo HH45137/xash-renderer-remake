@@ -53,6 +53,7 @@ namespace ref_vk {
         VkSubmitInfo submitInfo{};
         VkPipelineStageFlags submitPipelineStageFlags = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
         VkCommandPool cmdPool{};
+        std::vector<VkCommandBuffer> drawCmdBuffers{};
     };
     env_s r_env{};
 
@@ -155,6 +156,15 @@ VkResult createInstance() {
     return result;
 }
 
+bool createCommandBuffers() {
+
+    r_env.drawCmdBuffers.resize(r_env.swapChain.imageCount);
+    auto CI = genCommandBufferAllocateInfo(r_env.cmdPool, VK_COMMAND_BUFFER_LEVEL_PRIMARY,
+                                           static_cast<uint32_t>(r_env.drawCmdBuffers.size()));
+    bool result = VK_CHECK_RESULT(vkAllocateCommandBuffers(r_env.logicDevice, &CI, r_env.drawCmdBuffers.data()));
+    return result;
+}
+
 qboolean R_Init(void) {
     bool isSuccess = true;
 
@@ -248,6 +258,9 @@ qboolean R_Init(void) {
 
     // Setup swap chain
     r_env.swapChain.create(&r_env.winWidth, &r_env.winHeight, false, false);
+
+    // Create command buffers
+    createCommandBuffers();
 
     return isSuccess;
 }
