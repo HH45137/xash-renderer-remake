@@ -52,6 +52,7 @@ namespace ref_vk {
         } semaphores;
         VkSubmitInfo submitInfo{};
         VkPipelineStageFlags submitPipelineStageFlags = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+        VkCommandPool cmdPool{};
     };
     env_s r_env{};
 
@@ -236,6 +237,14 @@ qboolean R_Init(void) {
 
     // Initial swap chain surface
     isSuccess = r_env.swapChain.initSurface(r_env.window);
+
+    // Create command pool
+    VkCommandPoolCreateInfo cmdPoolCI{};
+    cmdPoolCI.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+    cmdPoolCI.queueFamilyIndex = r_env.swapChain.queueNodeIndex;
+    cmdPoolCI.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+    VK_CHECK_RESULT(vkCreateCommandPool(r_env.logicDevice, &cmdPoolCI, nullptr, &r_env.cmdPool),
+                    "Create command pool error!");
 
     return isSuccess;
 }
