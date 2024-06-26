@@ -234,6 +234,9 @@ qboolean R_Init(void) {
     r_env.submitInfo.signalSemaphoreCount = 1;
     r_env.submitInfo.pSignalSemaphores = &r_env.semaphores.renderComplete;
 
+    // Initial swap chain surface
+    isSuccess = r_env.swapChain.initSurface(r_env.window);
+
     return isSuccess;
 }
 

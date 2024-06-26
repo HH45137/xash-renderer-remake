@@ -2,7 +2,8 @@
 
 #include <vulkan/vulkan.hpp>
 #include <vulkan/vulkan_core.h>
-
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_vulkan.h>
 
 namespace ref_vk {
 
@@ -29,6 +30,7 @@ namespace ref_vk {
 
         void setContext(VkInstance instance, VkPhysicalDevice phyDevice, VkDevice logicDevice);
 
+        bool initSurface(SDL_Window *window);
     };
 
 }
