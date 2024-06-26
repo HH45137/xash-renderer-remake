@@ -246,6 +246,9 @@ qboolean R_Init(void) {
     VK_CHECK_RESULT(vkCreateCommandPool(r_env.logicDevice, &cmdPoolCI, nullptr, &r_env.cmdPool),
                     "Create command pool error!");
 
+    // Setup swap chain
+    r_env.swapChain.create(&r_env.winWidth, &r_env.winHeight, false, false);
+
     return isSuccess;
 }
 

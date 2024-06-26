@@ -24,13 +24,16 @@ namespace ref_vk {
         VkColorSpaceKHR colorSpace;
         VkSwapchainKHR swapchain{};
         uint32_t imageCount;
-        std::vector<VkImage> images{};
-        std::vector<TSwapChainBuffer> buffers;
+        std::vector<VkImage> images={};
+        std::vector<TSwapChainBuffer> buffers={};
         uint32_t queueNodeIndex = UINT32_MAX;
 
         void setContext(VkInstance instance, VkPhysicalDevice phyDevice, VkDevice logicDevice);
 
         bool initSurface(SDL_Window *window);
+
+        void create(int *width, int *height, bool vsync = false, bool fullscreen = false);
+
     };
 
 }
