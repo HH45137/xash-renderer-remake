@@ -1,3 +1,5 @@
+#define VMA_IMPLEMENTATION
+
 #include <ref_vk.h>
 #include <iostream>
 
@@ -8,6 +10,7 @@
 #include <common/CTools.h>
 #include <common/CDevice.h>
 #include <common/CSwapChain.h>
+#include <common/vk_mem_alloc.h>
 
 #if defined(_WIN32)
 
@@ -54,6 +57,19 @@ namespace REF_VK {
         VkPipelineStageFlags submitPipelineStageFlags = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
         VkCommandPool cmdPool{};
         std::vector<VkCommandBuffer> drawCmdBuffers{};
+        // Vertex buffer
+        struct {
+            VkBuffer buffer;
+            VmaAllocation allocation;
+        } vertices;
+        //Indices buffer
+        struct {
+            VkBuffer buffer;
+            VmaAllocation allocation;
+            uint32_t count;
+        } indices;
+
+        VmaAllocator vmaAllocator;
 
 
         bool init() {
@@ -149,6 +165,13 @@ namespace REF_VK {
 
             // Setup swap chain
             swapChain.create(&winWidth, &winHeight, false, false);
+
+            // Create VMA
+            VmaAllocatorCreateInfo vmaAllocatorCI{};
+            vmaAllocatorCI.device = this->logicDevice;
+            vmaAllocatorCI.instance = this->instance;
+            vmaAllocatorCI.physicalDevice = this->phyDevice;
+            vmaCreateAllocator(&vmaAllocatorCI, &this->vmaAllocator);
 
             // Create command buffers
             createCommandBuffers();
@@ -272,13 +295,79 @@ namespace REF_VK {
 
         void createVertexBuffer() {
 
+            // Vertex data
             std::vector<Vertex> vertexBuffer{
                     {{1.0f,  1.0f,  0.0f}, {1.0f, 0.0f, 0.0f}},
                     {{-1.0f, 1.0f,  0.0f}, {0.0f, 1.0f, 0.0f}},
                     {{0.0f,  -1.0f, 0.0f}, {0.0f, 0.0f, 1.0f}}
             };
+            uint32_t vertexBufferSize = static_cast<uint32_t>(vertexBuffer.size() * sizeof(Vertex));
+
+            // Index data
+            std::vector<uint32_t> indexBuffer{0,
+                                              1,
+                                              2};
+            uint32_t indexBufferSize = static_cast<uint32_t>(indexBuffer.size() * sizeof(uint32_t));
+            indices.count = indexBufferSize;
+
+            // Temp staging buffer
+            struct SStagingBuffer {
+                VkBuffer buffer;
+                VmaAllocation allocation;
+            };
+            struct {
+                SStagingBuffer vertices;
+                SStagingBuffer indices;
+            } stagingBuffers{};
+
+            // VMA memory usage auto
+            VmaAllocationCreateInfo allocInfo{};
+            allocInfo.usage = VMA_MEMORY_USAGE_AUTO;
+            allocInfo.flags = VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT | VMA_ALLOCATION_CREATE_MAPPED_BIT;
+
+            // Allocator staging buffer memory
+            VkBufferCreateInfo vbCI{};
+            vbCI.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+            vbCI.size = vertexBufferSize;
+            vbCI.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+            vbCI.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+            VmaAllocationInfo stagingVertexBufferAllocInfo{};
+            bool result = VK_CHECK_RESULT(
+                    vmaCreateBuffer(vmaAllocator, &vbCI, &allocInfo, &stagingBuffers.vertices.buffer,
+                                    &stagingBuffers.vertices.allocation,
+                                    &stagingVertexBufferAllocInfo));
+            // Map and copy
+            void *data = stagingVertexBufferAllocInfo.pMappedData;
+            vmaMapMemory(vmaAllocator, stagingBuffers.vertices.allocation, &data);
+            memcpy(data, vertexBuffer.data(), vertexBufferSize);
+            vmaUnmapMemory(vmaAllocator, stagingBuffers.vertices.allocation);
+            // Allocator vertex buffer memory
+            vbCI.usage = VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+            vbCI.flags = 0;
+            vmaCreateBuffer(vmaAllocator, &vbCI, &allocInfo, &vertices.buffer, &vertices.allocation, nullptr);
 
 
+            // Allocator staging buffer memory
+            VkBufferCreateInfo ibCI{};
+            ibCI.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+            ibCI.size = indexBufferSize;
+            ibCI.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+            ibCI.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+            VmaAllocationInfo stagingIndexBufferAllocInfo{};
+            result = VK_CHECK_RESULT(
+                    vmaCreateBuffer(vmaAllocator, &ibCI, &allocInfo, &stagingBuffers.indices.buffer,
+                                    &stagingBuffers.indices.allocation,
+                                    &stagingIndexBufferAllocInfo));
+            data = stagingIndexBufferAllocInfo.pMappedData;
+            vmaMapMemory(vmaAllocator, stagingBuffers.indices.allocation, &data);
+            memcpy(data, indexBuffer.data(), indexBufferSize);
+            vmaUnmapMemory(vmaAllocator, stagingBuffers.indices.allocation);
+            // Allocator vertex buffer memory
+            ibCI.usage = VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
+            ibCI.flags = 0;
+            vmaCreateBuffer(vmaAllocator, &ibCI, &allocInfo, &indices.buffer, &indices.allocation, nullptr);
+
+            return;
         }
 
     };
