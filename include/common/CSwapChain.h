@@ -5,7 +5,7 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_vulkan.h>
 
-namespace ref_vk {
+namespace REF_VK {
 
     typedef struct SSwapChainBuffer {
         VkImage image;

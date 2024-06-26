@@ -1,6 +1,6 @@
 #include <common/CTools.h>
 
-namespace ref_vk {
+namespace REF_VK {
 
     void LOG(LOG_ERRORS type, const char *text) {
         std::cout << "Log ";

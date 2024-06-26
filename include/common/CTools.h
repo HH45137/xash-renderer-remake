@@ -3,7 +3,7 @@
 #include <vulkan/vulkan.hpp>
 #include <iostream>
 
-namespace ref_vk {
+namespace REF_VK {
 
     enum LOG_ERRORS {
         NORMAL,

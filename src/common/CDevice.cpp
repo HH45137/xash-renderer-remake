@@ -3,7 +3,7 @@
 #include <common/CTools.h>
 
 
-namespace ref_vk {
+namespace REF_VK {
     CDevice::CDevice(VkPhysicalDevice phyDevice) {
         assert(phyDevice);
         this->physicalDevice = phyDevice;

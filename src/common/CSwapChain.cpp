@@ -2,7 +2,7 @@
 #include <common/CTools.h>
 
 
-namespace ref_vk {
+namespace REF_VK {
 
     void CSwapChain::setContext(VkInstance instance, VkPhysicalDevice phyDevice, VkDevice logicDevice) {
         this->instance = instance;

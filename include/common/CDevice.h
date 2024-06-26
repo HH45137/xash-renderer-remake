@@ -4,7 +4,7 @@
 #include <vulkan/vulkan.hpp>
 
 
-namespace ref_vk {
+namespace REF_VK {
     class CDevice {
     public:
         VkPhysicalDevice physicalDevice;
