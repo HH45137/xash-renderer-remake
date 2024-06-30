@@ -23,4 +23,6 @@ namespace REF_VK {
     VkBool32 getSupportedDepthFormat(VkPhysicalDevice phyDevice, VkFormat* depthFormat);
 
     VkCommandBufferAllocateInfo genCommandBufferAllocateInfo(VkCommandPool commandPool, VkCommandBufferLevel level, uint32_t bufferCount);
+
+    VkFenceCreateInfo genFenceCreateInfo(VkFenceCreateFlags flags = 0);
 }

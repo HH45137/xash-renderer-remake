@@ -69,6 +69,7 @@ namespace REF_VK {
             uint32_t count;
         } indices;
         VkQueue queue{};
+        std::vector<VkFence> waitFences{};
 
         VmaAllocator vmaAllocator;
 
@@ -177,8 +178,10 @@ namespace REF_VK {
             // Create command buffers
             createCommandBuffers();
 
+            createSynchronizationPrimitives();
+
             // Create vertex buffer
-            createVertexBuffer();
+//            createVertexBuffer();
 
             return isSuccess;
         }
@@ -292,6 +295,19 @@ namespace REF_VK {
                                                    static_cast<uint32_t>(drawCmdBuffers.size()));
             bool result = VK_CHECK_RESULT(vkAllocateCommandBuffers(logicDevice, &CI, drawCmdBuffers.data()));
             return result;
+        }
+
+        void createSynchronizationPrimitives() {
+            // Wait fences to sync command buffer access
+            VkFenceCreateInfo fenceCI = genFenceCreateInfo(VK_FENCE_CREATE_SIGNALED_BIT);
+            waitFences.resize(drawCmdBuffers.size());
+            for (auto &fence: waitFences) {
+                VK_CHECK_RESULT(vkCreateFence(logicDevice, &fenceCI, nullptr, &fence));
+            }
+        }
+
+        void setupDepthStencil() {
+            
         }
 
         void createVertexBuffer() {

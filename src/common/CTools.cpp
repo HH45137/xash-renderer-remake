@@ -88,4 +88,11 @@ namespace REF_VK {
         commandBufferAllocateInfo.commandBufferCount = bufferCount;
         return commandBufferAllocateInfo;
     }
+
+    VkFenceCreateInfo genFenceCreateInfo(VkFenceCreateFlags flags) {
+        VkFenceCreateInfo fenceCI{};
+        fenceCI.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+        fenceCI.flags = flags;
+        return fenceCI;
+    }
 }
