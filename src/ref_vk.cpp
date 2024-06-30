@@ -70,6 +70,11 @@ namespace REF_VK {
         } indices;
         VkQueue queue{};
         std::vector<VkFence> waitFences{};
+        struct {
+            VkImage image;
+            VmaAllocation allocation;
+            VkImageView imageView;
+        } depthStencil;
 
         VmaAllocator vmaAllocator;
 
@@ -179,6 +184,8 @@ namespace REF_VK {
             createCommandBuffers();
 
             createSynchronizationPrimitives();
+
+            setupDepthStencil();
 
             // Create vertex buffer
 //            createVertexBuffer();
@@ -307,7 +314,42 @@ namespace REF_VK {
         }
 
         void setupDepthStencil() {
-            
+            // Image
+            VkImageCreateInfo imageCI{};
+            imageCI.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+            imageCI.imageType = VK_IMAGE_TYPE_2D;
+            imageCI.format = depthFormat;
+            imageCI.extent = {static_cast<uint32_t>(winWidth), static_cast<uint32_t>(winHeight), 1};
+            imageCI.mipLevels = 1;
+            imageCI.arrayLayers = 1;
+            imageCI.samples = VK_SAMPLE_COUNT_1_BIT;
+            imageCI.tiling = VK_IMAGE_TILING_OPTIMAL;
+            imageCI.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
+            // Allocate memory for image and bind to out image
+            VmaAllocationCreateInfo allocInfo{};
+            allocInfo.usage = VMA_MEMORY_USAGE_AUTO;
+            VK_CHECK_RESULT(
+                    vmaCreateImage(vmaAllocator, &imageCI, &allocInfo, &depthStencil.image, &depthStencil.allocation,
+                                   nullptr));
+
+            // Image view
+            VkImageViewCreateInfo imageViewCI{};
+            imageViewCI.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+            imageViewCI.viewType = VK_IMAGE_VIEW_TYPE_2D;
+            imageViewCI.format = depthFormat;
+            imageViewCI.subresourceRange = {};
+            imageViewCI.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
+            if (depthFormat >= VK_FORMAT_D16_UNORM_S8_UINT) {
+                imageViewCI.subresourceRange.aspectMask |= VK_IMAGE_ASPECT_STENCIL_BIT;
+            }
+            imageViewCI.subresourceRange.baseMipLevel = 0;
+            imageViewCI.subresourceRange.levelCount = 1;
+            imageViewCI.subresourceRange.baseArrayLayer = 0;
+            imageViewCI.subresourceRange.layerCount = 1;
+            imageViewCI.image = depthStencil.image;
+            VK_CHECK_RESULT(
+                    vkCreateImageView(logicDevice, &imageViewCI, nullptr, &depthStencil.imageView));
+
         }
 
         void createVertexBuffer() {
