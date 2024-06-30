@@ -79,6 +79,7 @@ namespace REF_VK {
         VkPipelineCache pipelineCache{};
 
         VmaAllocator vmaAllocator;
+        std::vector<VkFramebuffer> frameBuffers{};
 
 
         bool init() {
@@ -192,6 +193,8 @@ namespace REF_VK {
             setupRenderPass();
 
             createPipelineCache();
+
+            setupFrameBuffer();
 
             // Create vertex buffer
 //            createVertexBuffer();
@@ -439,6 +442,30 @@ namespace REF_VK {
             VkPipelineCacheCreateInfo pipelineCacheCI{};
             pipelineCacheCI.sType = VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO;
             VK_CHECK_RESULT(vkCreatePipelineCache(logicDevice, &pipelineCacheCI, nullptr, &pipelineCache));
+        }
+
+        void setupFrameBuffer() {
+            std::array<VkImageView, 2> attachments{};
+
+            attachments[1] = depthStencil.imageView;
+
+            VkFramebufferCreateInfo framebufferCI{};
+            framebufferCI.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+            framebufferCI.pNext = nullptr;
+            framebufferCI.renderPass = renderPass;
+            framebufferCI.attachmentCount = 2;
+            framebufferCI.pAttachments = attachments.data();
+            framebufferCI.width = winWidth;
+            framebufferCI.height = winHeight;
+            framebufferCI.layers = 1;
+
+            // Create frame buffers for every swap chain image
+            frameBuffers.resize(swapChain.imageCount);
+            for (int i = 0; i < swapChain.buffers.size(); ++i) {
+                attachments[0] = swapChain.buffers[i].view;
+                VK_CHECK_RESULT(vkCreateFramebuffer(logicDevice, &framebufferCI, nullptr, &frameBuffers[i]));
+            }
+
         }
 
         void createVertexBuffer() {

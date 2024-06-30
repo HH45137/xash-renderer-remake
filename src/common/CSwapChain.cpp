@@ -222,7 +222,6 @@ namespace REF_VK {
             VK_CHECK_RESULT(vkCreateImageView(device, &colorAttachmentView, nullptr, &buffers[i].view),
                             "Cannot create swapchain buffers, containing the images and imageview");
 
-            return;
         }
 
     }
