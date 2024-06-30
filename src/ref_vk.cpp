@@ -76,6 +76,7 @@ namespace REF_VK {
             VkImageView imageView;
         } depthStencil;
         VkRenderPass renderPass{};
+        VkPipelineCache pipelineCache{};
 
         VmaAllocator vmaAllocator;
 
@@ -189,6 +190,8 @@ namespace REF_VK {
             setupDepthStencil();
 
             setupRenderPass();
+
+            createPipelineCache();
 
             // Create vertex buffer
 //            createVertexBuffer();
@@ -429,7 +432,13 @@ namespace REF_VK {
             renderPassCI.pDependencies = dependencies.data();
 
             VK_CHECK_RESULT(vkCreateRenderPass(logicDevice, &renderPassCI, nullptr, &renderPass));
-            
+
+        }
+
+        void createPipelineCache() {
+            VkPipelineCacheCreateInfo pipelineCacheCI{};
+            pipelineCacheCI.sType = VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO;
+            VK_CHECK_RESULT(vkCreatePipelineCache(logicDevice, &pipelineCacheCI, nullptr, &pipelineCache));
         }
 
         void createVertexBuffer() {
