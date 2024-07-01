@@ -27,6 +27,8 @@ namespace REF_VK {
     public:
         void createSynchronizationPrimitives();
 
+        void createCommandBuffers();
+
         void createVertexBuffer();
 
         bool prepare();
@@ -35,6 +37,9 @@ namespace REF_VK {
         std::array<VkSemaphore, MAX_CONCURRENT_FRAMES> presentCompleteSemaphores{};
         std::array<VkSemaphore, MAX_CONCURRENT_FRAMES> renderCompleteSemaphores{};
         std::array<VkFence, MAX_CONCURRENT_FRAMES> waitFences{};
+        VkCommandPool commandPool{};
+        std::array<VkCommandBuffer, MAX_CONCURRENT_FRAMES> commandBuffers{};
+
     };
 
     void CRef_Vk::createSynchronizationPrimitives() {
@@ -182,8 +187,22 @@ namespace REF_VK {
     bool CRef_Vk::prepare() {
         VulkanAppBase::prepare();
         createSynchronizationPrimitives();
+        createCommandBuffers();
 
         return true;
+    }
+
+    void CRef_Vk::createCommandBuffers() {
+        VkCommandPoolCreateInfo commandPoolCI{};
+        commandPoolCI.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+        commandPoolCI.queueFamilyIndex = swapChain.queueNodeIndex;
+        commandPoolCI.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+        VK_CHECK_RESULT(vkCreateCommandPool(logicDevice, &commandPoolCI, nullptr, &commandPool));
+
+        VkCommandBufferAllocateInfo cmdBufAllocateInfo = genCommandBufferAllocateInfo(commandPool,
+                                                                                      VK_COMMAND_BUFFER_LEVEL_PRIMARY,
+                                                                                      MAX_CONCURRENT_FRAMES);
+        VK_CHECK_RESULT(vkAllocateCommandBuffers(logicDevice, &cmdBufAllocateInfo, commandBuffers.data()));
     }
 
     CRef_Vk ref_vk_obj{};

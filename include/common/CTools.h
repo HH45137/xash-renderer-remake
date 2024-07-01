@@ -17,12 +17,14 @@ namespace REF_VK {
 
     bool VK_CHECK_RESULT(VkResult res);
 
-    bool VK_CHECK_RESULT(VkResult res, const char* text);
+    bool VK_CHECK_RESULT(VkResult res, const char *text);
 
-    VkBool32 getSupportedDepthStencilFormat(VkPhysicalDevice phyDevice, VkFormat* depthStencilFormat);
-    VkBool32 getSupportedDepthFormat(VkPhysicalDevice phyDevice, VkFormat* depthFormat);
+    VkBool32 getSupportedDepthStencilFormat(VkPhysicalDevice phyDevice, VkFormat *depthStencilFormat);
 
-    VkCommandBufferAllocateInfo genCommandBufferAllocateInfo(VkCommandPool commandPool, VkCommandBufferLevel level, uint32_t bufferCount);
+    VkBool32 getSupportedDepthFormat(VkPhysicalDevice phyDevice, VkFormat *depthFormat);
+
+    VkCommandBufferAllocateInfo
+    genCommandBufferAllocateInfo(VkCommandPool commandPool, VkCommandBufferLevel level, uint32_t bufferCount);
 
     VkFenceCreateInfo genFenceCreateInfo(VkFenceCreateFlags flags = 0);
 }
