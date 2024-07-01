@@ -35,6 +35,8 @@ add_library(${PROJECT_NAME} SHARED
         src/common/CTools.cpp
         include/common/CSwapChain.h
         src/common/CSwapChain.cpp
+        src/common/VulkanAppBase.cpp
+        include/common/VulkanAppBase.h
 )
 ADD_LIB_FUNC(${PROJECT_NAME})
 
