@@ -51,17 +51,6 @@ namespace REF_VK {
         VkPipelineStageFlags submitPipelineStageFlags = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
         VkCommandPool cmdPool{};
         std::vector<VkCommandBuffer> drawCmdBuffers{};
-        // Vertex buffer
-        struct {
-            VkBuffer buffer;
-            VmaAllocation allocation;
-        } vertices;
-        //Indices buffer
-        struct {
-            VkBuffer buffer;
-            VmaAllocation allocation;
-            uint32_t count;
-        } indices;
         VkQueue queue{};
         std::vector<VkFence> waitFences{};
         struct {

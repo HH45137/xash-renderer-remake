@@ -40,6 +40,17 @@ namespace REF_VK {
         VkCommandPool commandPool{};
         std::array<VkCommandBuffer, MAX_CONCURRENT_FRAMES> commandBuffers{};
 
+        // Vertex buffer
+        struct {
+            VkBuffer buffer;
+            VmaAllocation allocation;
+        } vertices;
+        //Indices buffer
+        struct {
+            VkBuffer buffer;
+            VmaAllocation allocation;
+            uint32_t count;
+        } indices;
     };
 
     void CRef_Vk::createSynchronizationPrimitives() {
@@ -147,7 +158,7 @@ namespace REF_VK {
 
         // Start command
         VkCommandBufferBeginInfo cmdBuffBeginInfo{};
-        cmdBuffBeginInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+        cmdBuffBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
         VK_CHECK_RESULT(vkBeginCommandBuffer(copyCmdBuf, &cmdBuffBeginInfo));
         {
             VkBufferCopy copyRegion{};
@@ -168,8 +179,14 @@ namespace REF_VK {
         VkFence fence;
         VK_CHECK_RESULT(vkCreateFence(logicDevice, &fenceCI, nullptr, &fence));
 
+        // Submit the command buffer to the queue to finish the copy
+        VkSubmitInfo submitInfoTemp{};
+        submitInfoTemp.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+        submitInfoTemp.commandBufferCount = 1;
+        submitInfoTemp.pCommandBuffers = &copyCmdBuf;
+
         // Submit to queue
-        VK_CHECK_RESULT(vkQueueSubmit(queue, 1, &submitInfo, fence));
+        VK_CHECK_RESULT(vkQueueSubmit(queue, 1, &submitInfoTemp, fence));
         // Wait...
         VK_CHECK_RESULT(vkWaitForFences(logicDevice, 1, &fence, VK_TRUE, DEFAULT_FENCE_TIMEOUT));
 
@@ -177,9 +194,9 @@ namespace REF_VK {
         vkFreeCommandBuffers(logicDevice, cmdPool, 1, &copyCmdBuf);
 
         vmaDestroyBuffer(vmaAllocator, stagingBuffers.vertices.buffer, stagingBuffers.vertices.allocation);
-        vmaFreeMemory(vmaAllocator, stagingBuffers.vertices.allocation);
+//        vmaFreeMemory(vmaAllocator, stagingBuffers.vertices.allocation);
         vmaDestroyBuffer(vmaAllocator, stagingBuffers.indices.buffer, stagingBuffers.indices.allocation);
-        vmaFreeMemory(vmaAllocator, stagingBuffers.indices.allocation);
+//        vmaFreeMemory(vmaAllocator, stagingBuffers.indices.allocation);
 
         return;
     }
@@ -188,6 +205,7 @@ namespace REF_VK {
         VulkanAppBase::prepare();
         createSynchronizationPrimitives();
         createCommandBuffers();
+        createVertexBuffer();
 
         return true;
     }

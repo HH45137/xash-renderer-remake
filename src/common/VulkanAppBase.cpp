@@ -312,6 +312,9 @@ bool REF_VK::VulkanAppBase::init() {
                                 "Could not create vulkan device");
     logicDevice = device->device;
 
+    // Get graphics queue form the device
+    vkGetDeviceQueue(logicDevice,device->queueFamilyIndices.graphics, 0, &queue);
+
     //Find a suitable depth, stencil format
     VkBool32 validFormat{};
     if (requiresStencil) {
