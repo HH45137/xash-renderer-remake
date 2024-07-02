@@ -10,6 +10,7 @@
 #include <common/CSwapChain.h>
 #include <common/vk_mem_alloc.h>
 #include <common/VulkanAppBase.h>
+#include <glm/glm.hpp>
 
 #if defined(_WIN32)
 
@@ -31,15 +32,11 @@ namespace REF_VK {
 
         void createVertexBuffer();
 
+        void createUniformBuffers();
+
         bool prepare();
 
     private:
-        std::array<VkSemaphore, MAX_CONCURRENT_FRAMES> presentCompleteSemaphores{};
-        std::array<VkSemaphore, MAX_CONCURRENT_FRAMES> renderCompleteSemaphores{};
-        std::array<VkFence, MAX_CONCURRENT_FRAMES> waitFences{};
-        VkCommandPool commandPool{};
-        std::array<VkCommandBuffer, MAX_CONCURRENT_FRAMES> commandBuffers{};
-
         // Vertex buffer
         struct {
             VkBuffer buffer;
@@ -51,6 +48,27 @@ namespace REF_VK {
             VmaAllocation allocation;
             uint32_t count;
         } indices;
+
+        typedef struct SShaderData {
+            glm::mat4 projection;
+            glm::mat4 model;
+            glm::mat4 view;
+        } TShaderData;
+
+        typedef struct SUniformBuffer {
+            VmaAllocation allocation;
+            VkBuffer buffer;
+            // store the resources bound to the binding point in a shader
+            VkDescriptorSet descriptorSet;
+            uint8_t *mapped{nullptr};
+        } TUniformBuffer;
+
+        std::array<VkSemaphore, MAX_CONCURRENT_FRAMES> presentCompleteSemaphores{};
+        std::array<VkSemaphore, MAX_CONCURRENT_FRAMES> renderCompleteSemaphores{};
+        std::array<VkFence, MAX_CONCURRENT_FRAMES> waitFences{};
+        VkCommandPool commandPool{};
+        std::array<VkCommandBuffer, MAX_CONCURRENT_FRAMES> commandBuffers{};
+        std::array<TUniformBuffer, MAX_CONCURRENT_FRAMES> uniformBuffers{};
     };
 
     void CRef_Vk::createSynchronizationPrimitives() {
@@ -206,6 +224,7 @@ namespace REF_VK {
         createSynchronizationPrimitives();
         createCommandBuffers();
         createVertexBuffer();
+        createUniformBuffers();
 
         return true;
     }
@@ -221,6 +240,31 @@ namespace REF_VK {
                                                                                       VK_COMMAND_BUFFER_LEVEL_PRIMARY,
                                                                                       MAX_CONCURRENT_FRAMES);
         VK_CHECK_RESULT(vkAllocateCommandBuffers(logicDevice, &cmdBufAllocateInfo, commandBuffers.data()));
+    }
+
+    void CRef_Vk::createUniformBuffers() {
+
+        VmaAllocationCreateInfo allocInfo{};
+        allocInfo.usage = VMA_MEMORY_USAGE_AUTO;
+        allocInfo.flags = VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT | VMA_ALLOCATION_CREATE_MAPPED_BIT;
+
+        VkBufferCreateInfo bufferCI{};
+        bufferCI.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+        bufferCI.size = sizeof(TShaderData);
+        // This buffer type is The Uniform buffer
+        bufferCI.usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
+
+        for (int i = 0; i < MAX_CONCURRENT_FRAMES; ++i) {
+            VK_CHECK_RESULT(vmaCreateBuffer(vmaAllocator, &bufferCI, &allocInfo, &uniformBuffers[i].buffer,
+                                            &uniformBuffers[i].allocation,
+                                            nullptr),
+                            "Cannot create Uniform buffer!");
+            VK_CHECK_RESULT(
+                    vmaMapMemory(vmaAllocator, uniformBuffers[i].allocation, (void **) &uniformBuffers[i].mapped),
+                    "Cannot map Uniform buffer!");
+        }
+
+        return;
     }
 
     CRef_Vk ref_vk_obj{};
