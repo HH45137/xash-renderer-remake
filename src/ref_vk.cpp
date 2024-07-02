@@ -34,6 +34,8 @@ namespace REF_VK {
 
         void createUniformBuffers();
 
+        void createDescriptorSetLayout();
+
         bool prepare();
 
     private:
@@ -69,6 +71,8 @@ namespace REF_VK {
         VkCommandPool commandPool{};
         std::array<VkCommandBuffer, MAX_CONCURRENT_FRAMES> commandBuffers{};
         std::array<TUniformBuffer, MAX_CONCURRENT_FRAMES> uniformBuffers{};
+        VkDescriptorSetLayout descriptorSetLayout{};
+        VkPipelineLayout pipelineLayout{};
     };
 
     void CRef_Vk::createSynchronizationPrimitives() {
@@ -225,6 +229,7 @@ namespace REF_VK {
         createCommandBuffers();
         createVertexBuffer();
         createUniformBuffers();
+        createDescriptorSetLayout();
 
         return true;
     }
@@ -263,6 +268,35 @@ namespace REF_VK {
                     vmaMapMemory(vmaAllocator, uniformBuffers[i].allocation, (void **) &uniformBuffers[i].mapped),
                     "Cannot map Uniform buffer!");
         }
+
+        return;
+    }
+
+    void CRef_Vk::createDescriptorSetLayout() {
+
+        // Binding 0: Uniform buffer (Vertex shader)
+        VkDescriptorSetLayoutBinding layoutBinding{};
+        layoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+        layoutBinding.descriptorCount = 1;
+        layoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+        layoutBinding.pImmutableSamplers = nullptr;
+
+        VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCI{};
+        descriptorSetLayoutCI.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+        descriptorSetLayoutCI.pNext = nullptr;
+        descriptorSetLayoutCI.bindingCount = 1;
+        descriptorSetLayoutCI.pBindings = &layoutBinding;
+        VK_CHECK_RESULT(vkCreateDescriptorSetLayout(logicDevice, &descriptorSetLayoutCI, nullptr, &descriptorSetLayout),
+                        "Cannot create descriptor set layout");
+
+        // Create pipeline layout
+        VkPipelineLayoutCreateInfo pipelineLayoutCI{};
+        pipelineLayoutCI.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+        pipelineLayoutCI.pNext = nullptr;
+        pipelineLayoutCI.setLayoutCount = 1;
+        pipelineLayoutCI.pSetLayouts = &descriptorSetLayout;
+        VK_CHECK_RESULT(vkCreatePipelineLayout(logicDevice, &pipelineLayoutCI, nullptr, &pipelineLayout),
+                        "Cannot create pipeline layout");
 
         return;
     }
