@@ -36,6 +36,8 @@ namespace REF_VK {
 
         void createDescriptorSetLayout();
 
+        void createDescriptorPool();
+
         bool prepare();
 
     private:
@@ -230,6 +232,7 @@ namespace REF_VK {
         createVertexBuffer();
         createUniformBuffers();
         createDescriptorSetLayout();
+        createDescriptorPool();
 
         return true;
     }
@@ -297,6 +300,24 @@ namespace REF_VK {
         pipelineLayoutCI.pSetLayouts = &descriptorSetLayout;
         VK_CHECK_RESULT(vkCreatePipelineLayout(logicDevice, &pipelineLayoutCI, nullptr, &pipelineLayout),
                         "Cannot create pipeline layout");
+
+        return;
+    }
+
+    void CRef_Vk::createDescriptorPool() {
+        VkDescriptorPoolSize descriptorPoolSize[1]{};
+        descriptorPoolSize[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+        descriptorPoolSize[0].descriptorCount = MAX_CONCURRENT_FRAMES;
+
+        VkDescriptorPoolCreateInfo descriptorPoolCI{};
+        descriptorPoolCI.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+        descriptorPoolCI.pNext = nullptr;
+        descriptorPoolCI.poolSizeCount = 1;
+        descriptorPoolCI.pPoolSizes = descriptorPoolSize;
+        descriptorPoolCI.maxSets = MAX_CONCURRENT_FRAMES;
+
+        VK_CHECK_RESULT(vkCreateDescriptorPool(logicDevice, &descriptorPoolCI, nullptr, &descriptorPool),
+                        "Cannot create descriptor pool!");
 
         return;
     }

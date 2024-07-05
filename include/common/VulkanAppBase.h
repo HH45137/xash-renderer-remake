@@ -60,9 +60,9 @@ namespace REF_VK {
         } depthStencil;
         VkRenderPass renderPass{};
         VkPipelineCache pipelineCache{};
-
         VmaAllocator vmaAllocator;
         std::vector<VkFramebuffer> frameBuffers{};
+        VkDescriptorPool descriptorPool{};
 
 
         bool init();
