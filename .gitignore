@@ -1,4 +1,4 @@
 /bin/
 /cmake-build-debug/
 /.idea/
-*.spv
+/assets/shaders/*/*.spv
