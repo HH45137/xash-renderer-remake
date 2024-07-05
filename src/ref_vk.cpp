@@ -38,6 +38,8 @@ namespace REF_VK {
 
         void createDescriptorPool();
 
+        void createDescriptorSets();
+
         bool prepare();
 
     private:
@@ -233,6 +235,7 @@ namespace REF_VK {
         createUniformBuffers();
         createDescriptorSetLayout();
         createDescriptorPool();
+        createDescriptorSets();
 
         return true;
     }
@@ -320,6 +323,38 @@ namespace REF_VK {
                         "Cannot create descriptor pool!");
 
         return;
+    }
+
+    void CRef_Vk::createDescriptorSets() {
+        // Allocate one descriptor set per frame from the global descriptor pool
+        for (int i = 0; i < MAX_CONCURRENT_FRAMES; ++i) {
+            VkDescriptorSetAllocateInfo allocateInfo{};
+            allocateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+            allocateInfo.descriptorPool = descriptorPool;
+            allocateInfo.descriptorSetCount = 1;
+            allocateInfo.pSetLayouts = &descriptorSetLayout;
+            VK_CHECK_RESULT(vkAllocateDescriptorSets(logicDevice, &allocateInfo, &uniformBuffers[i].descriptorSet));
+
+            // Update the descriptor set determining the shader binding points
+            VkWriteDescriptorSet writeDescriptorSet{};
+
+            // The buffers information is passed using a descriptor info structure
+            VkDescriptorBufferInfo bufferInfo{};
+            bufferInfo.buffer = uniformBuffers[i].buffer;
+            bufferInfo.range = sizeof(TShaderData);
+
+            // Binding 0 : Uniform buffer
+            writeDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+            writeDescriptorSet.dstSet = uniformBuffers[i].descriptorSet;
+            writeDescriptorSet.descriptorCount = 1;
+            writeDescriptorSet.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+            writeDescriptorSet.pBufferInfo = &bufferInfo;
+            writeDescriptorSet.dstBinding = 0;
+            vkUpdateDescriptorSets(logicDevice, 1, &writeDescriptorSet, 0, nullptr);
+
+            return;
+        }
+
     }
 
     CRef_Vk ref_vk_obj{};
