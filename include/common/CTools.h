@@ -27,4 +27,8 @@ namespace REF_VK {
     genCommandBufferAllocateInfo(VkCommandPool commandPool, VkCommandBufferLevel level, uint32_t bufferCount);
 
     VkFenceCreateInfo genFenceCreateInfo(VkFenceCreateFlags flags = 0);
+
+    VkShaderModule loadSPIRVShader(VkDevice device, std::string fileName);
+
+    std::string getBasedAssetsPath();
 }

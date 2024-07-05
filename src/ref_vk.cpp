@@ -40,6 +40,8 @@ namespace REF_VK {
 
         void createDescriptorSets();
 
+        void createPipelines();
+
         bool prepare();
 
     private:
@@ -77,6 +79,7 @@ namespace REF_VK {
         std::array<TUniformBuffer, MAX_CONCURRENT_FRAMES> uniformBuffers{};
         VkDescriptorSetLayout descriptorSetLayout{};
         VkPipelineLayout pipelineLayout{};
+        VkPipeline pipeline{};
     };
 
     void CRef_Vk::createSynchronizationPrimitives() {
@@ -236,6 +239,7 @@ namespace REF_VK {
         createDescriptorSetLayout();
         createDescriptorPool();
         createDescriptorSets();
+        createPipelines();
 
         return true;
     }
@@ -355,6 +359,151 @@ namespace REF_VK {
             return;
         }
 
+    }
+
+    void CRef_Vk::createPipelines() {
+        // ============ Create the graphics pipeline ============
+
+        VkGraphicsPipelineCreateInfo graphicsPipelineCI{};
+        graphicsPipelineCI.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+        graphicsPipelineCI.layout = pipelineLayout;
+        graphicsPipelineCI.renderPass = renderPass;
+
+        // Used triangle mode assembled data
+        VkPipelineInputAssemblyStateCreateInfo inputAssemblyStateCI{};
+        inputAssemblyStateCI.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
+        inputAssemblyStateCI.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+
+        // Rasterization state
+        VkPipelineRasterizationStateCreateInfo rasterizationStateCI{};
+        rasterizationStateCI.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
+        rasterizationStateCI.polygonMode = VK_POLYGON_MODE_FILL;
+        rasterizationStateCI.cullMode = VK_CULL_MODE_NONE;
+        rasterizationStateCI.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
+        rasterizationStateCI.depthClampEnable = VK_FALSE;
+        rasterizationStateCI.rasterizerDiscardEnable = VK_FALSE;
+        rasterizationStateCI.depthBiasEnable = VK_FALSE;
+        rasterizationStateCI.lineWidth = 1.0f;
+
+        // Color blend state describes how blend factors ar e calculated;
+        VkPipelineColorBlendAttachmentState blendAttachmentState{};
+        blendAttachmentState.colorWriteMask = 0xf;
+        blendAttachmentState.blendEnable = VK_FALSE;
+        VkPipelineColorBlendStateCreateInfo colorBlendStateCI{};
+        colorBlendStateCI.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+        colorBlendStateCI.attachmentCount = 1;
+        colorBlendStateCI.pAttachments = &blendAttachmentState;
+
+        // Viewport state sets the number of viewports and scissor used in this pipeline
+        VkPipelineViewportStateCreateInfo viewportStateCI{};
+        viewportStateCI.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
+        viewportStateCI.viewportCount = 1;
+        viewportStateCI.scissorCount = 1;
+
+        // Enable dynamic states
+        std::vector<VkDynamicState> dynamicStateEnables{};
+        dynamicStateEnables.push_back(VK_DYNAMIC_STATE_VIEWPORT);
+        dynamicStateEnables.push_back(VK_DYNAMIC_STATE_SCISSOR);
+        VkPipelineDynamicStateCreateInfo dynamicStateCI{};
+        dynamicStateCI.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+        dynamicStateCI.pDynamicStates = dynamicStateEnables.data();
+        dynamicStateCI.dynamicStateCount = static_cast<uint32_t>(dynamicStateEnables.size());
+
+        // Depth and stencil state containing depth and stencil compare and test operations
+        VkPipelineDepthStencilStateCreateInfo depthStencilStateCI{};
+        depthStencilStateCI.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+        depthStencilStateCI.depthTestEnable = VK_TRUE;
+        depthStencilStateCI.depthWriteEnable = VK_TRUE;
+        depthStencilStateCI.depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL;
+        depthStencilStateCI.depthBoundsTestEnable = VK_FALSE;
+        depthStencilStateCI.back.failOp = VK_STENCIL_OP_KEEP;
+        depthStencilStateCI.back.passOp = VK_STENCIL_OP_KEEP;
+        depthStencilStateCI.back.compareOp = VK_COMPARE_OP_ALWAYS;
+        depthStencilStateCI.stencilTestEnable = VK_FALSE;
+        depthStencilStateCI.front = depthStencilStateCI.back;
+
+        // Multi sampling state
+        VkPipelineMultisampleStateCreateInfo multisampleStateCreateInfo{};
+        multisampleStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
+        multisampleStateCreateInfo.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
+        multisampleStateCreateInfo.pSampleMask = nullptr;
+
+        // Vertex input descriptions
+
+        // Vertex input binding
+        VkVertexInputBindingDescription vertexInputBindingDescription{};
+        vertexInputBindingDescription.binding = 0;
+        vertexInputBindingDescription.stride = sizeof(Vertex);
+        vertexInputBindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+
+        // Input attribute bindings describe shader attribute locations and memory layouts
+        std::array<VkVertexInputAttributeDescription, 2> vertexInputAttributes{};
+        // Example
+        //	layout (location = 0) in vec3 inPos;
+        //	layout (location = 1) in vec3 inColor;
+
+        // Attribute location 0 : Position
+        vertexInputAttributes[0].binding = 0;
+        vertexInputAttributes[0].location = 0;
+        vertexInputAttributes[0].format = VK_FORMAT_R32G32B32A32_SFLOAT;
+        vertexInputAttributes[0].offset = offsetof(Vertex, position);
+        // Attribute location 1 : Color
+        vertexInputAttributes[1].binding = 0;
+        vertexInputAttributes[1].location = 1;
+        vertexInputAttributes[1].format = VK_FORMAT_R32G32B32A32_SFLOAT;
+        vertexInputAttributes[1].offset = offsetof(Vertex, color);
+
+        // Vertex input state used for pipeline creation
+        VkPipelineVertexInputStateCreateInfo vertexInputStateCI{};
+        vertexInputStateCI.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+        vertexInputStateCI.vertexBindingDescriptionCount = 1;
+        vertexInputStateCI.pVertexBindingDescriptions = &vertexInputBindingDescription;
+        vertexInputStateCI.vertexAttributeDescriptionCount = 2;
+        vertexInputStateCI.pVertexAttributeDescriptions = vertexInputAttributes.data();
+
+        // Shaders
+        std::array<VkPipelineShaderStageCreateInfo, 2> shaderStages{};
+
+        // Vertex Shader
+        shaderStages[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+        shaderStages[0].stage = VK_SHADER_STAGE_VERTEX_BIT;
+        shaderStages[0].module = loadSPIRVShader(logicDevice,
+                                                 getBasedAssetsPath() + "/shaders/triangle/triangle.vert.spv");
+        shaderStages[0].pName = "main";
+        assert(shaderStages[0].module != VK_NULL_HANDLE);
+
+        // Fragment Shader
+        shaderStages[1].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+        shaderStages[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+        shaderStages[1].module = loadSPIRVShader(logicDevice,
+                                                 getBasedAssetsPath() + "/shaders/triangle/triangle.frag.spv");
+        shaderStages[1].pName = "main";
+        assert(shaderStages[1].module != VK_NULL_HANDLE);
+
+        // Set pipeline shader stage info
+        graphicsPipelineCI.stageCount = static_cast<uint32_t>(shaderStages.size());
+        graphicsPipelineCI.pStages = shaderStages.data();
+
+        // Set pipeline states info
+        graphicsPipelineCI.pVertexInputState = &vertexInputStateCI;
+        graphicsPipelineCI.pInputAssemblyState = &inputAssemblyStateCI;
+        graphicsPipelineCI.pRasterizationState = &rasterizationStateCI;
+        graphicsPipelineCI.pColorBlendState = &colorBlendStateCI;
+        graphicsPipelineCI.pMultisampleState = &multisampleStateCreateInfo;
+        graphicsPipelineCI.pViewportState = &viewportStateCI;
+        graphicsPipelineCI.pDepthStencilState = &depthStencilStateCI;
+        graphicsPipelineCI.pDynamicState = &dynamicStateCI;
+
+        // Create rendering pipeline
+        VK_CHECK_RESULT(
+                vkCreateGraphicsPipelines(logicDevice, pipelineCache, 1, &graphicsPipelineCI, nullptr, &pipeline),
+                "Cannot create graphics pipeline!");
+
+        // Destroy shader modules
+        vkDestroyShaderModule(logicDevice, shaderStages[0].module, nullptr);
+        vkDestroyShaderModule(logicDevice, shaderStages[1].module, nullptr);
+
+        return;
     }
 
     CRef_Vk ref_vk_obj{};
